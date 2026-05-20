@@ -1,0 +1,72 @@
+## The problem
+
+A shopping surface that worked beautifully for users who knew exactly what
+they wanted, and failed almost entirely for users who didn&apos;t. The
+catalog was rich, the filters were well-built, and the search bar was a
+keyword-matching system from a decade ago. The intent gap was obvious — a
+user typing &ldquo;something to wear to a beach wedding in October&rdquo;
+got either an empty page or a flood of unrelated results.
+
+The brief was to design a conversational layer that could turn that kind of
+natural-language intent into a small, curated, explainable product set —
+without hallucinating products that don&apos;t exist, and without depending
+on a black-box vendor stack we couldn&apos;t evaluate.
+
+## The approach
+
+I designed and prototyped the system end-to-end, with the architectural
+target being something a small team could maintain, evaluate, and iterate
+on — not a one-shot vendor integration.
+
+The retrieval pipeline came together in three layers:
+
+- **Hybrid retrieval** — dense embeddings over product descriptions and
+  sparse BM25 over structured attributes (category, colour, season, price
+  band). The two signals catch different things; neither is sufficient
+  alone.
+- **HyDE query rewriting** — for vague queries, the system generates a
+  hypothetical product description first, then retrieves against that.
+  This dramatically improves recall on intent-style queries that don&apos;t
+  share vocabulary with the catalog.
+- **Reciprocal rank fusion** — the dense and sparse result lists are merged
+  by rank, not by score, which is robust to the scale differences between
+  the two systems.
+
+The generation layer was deliberately constrained: the LLM only ever sees
+retrieved products and is instructed to recommend from that set, with
+reasoning. No free-form product invention. Every recommendation cites the
+product ID it came from, which makes the whole pipeline evaluable.
+
+## What this unlocked
+
+- A measurable intent-to-result pipeline that product, design, and
+  engineering could iterate on with shared evaluation harnesses.
+- A model-agnostic retrieval stack — swapping out the embedding model or
+  the LLM is a configuration change, not a re-architecture.
+- A clear separation between the retrieval quality problem and the
+  generation quality problem, which meant the team could improve each
+  independently.
+- A demo surface that turned a vague product brief — &ldquo;make shopping
+  feel like talking to a stylist&rdquo; — into something stakeholders could
+  actually use, react to, and steer.
+
+## What I&apos;d call out as lessons
+
+> The hard part of a RAG system isn&apos;t the LLM. It&apos;s the retrieval
+> pipeline and the evaluation harness.
+
+Things I keep returning to from this work:
+
+- **Hybrid retrieval beats either side alone.** Dense embeddings catch
+  semantic similarity; sparse retrieval catches exact attribute matches.
+  Production systems need both.
+- **HyDE is a cheat code for vague queries.** Letting the LLM rewrite the
+  query before retrieval is one of the highest-leverage moves in the
+  pipeline. It costs almost nothing and changes the answer profile
+  entirely.
+- **Constrain the generation layer.** The LLM should pick from a set, not
+  invent the set. The moment you let it generate freely, you&apos;ve given
+  up the ability to evaluate.
+- **Evaluation harnesses are the deliverable.** A RAG system without a
+  golden set is a vibes-driven engineering project. With one, every
+  improvement is a measurable change against a known baseline.

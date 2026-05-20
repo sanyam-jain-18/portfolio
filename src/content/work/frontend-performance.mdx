@@ -1,0 +1,67 @@
+## The problem
+
+A portfolio of consumer-facing web properties — news, lifestyle, commerce —
+all sharing a common platform layer, all showing different shades of the
+same Core Web Vitals problem. LCP was slow on key landing pages, CLS was
+jumping on the surfaces that monetised, and INP regressions were sneaking
+in unnoticed because the platform team didn&apos;t have a budget that
+broke a build.
+
+The brief was to bring measured user-experience metrics back inside an
+acceptable band — without slowing down the product teams who were
+landing features on top of the platform.
+
+## The approach
+
+I worked across the whole pipeline, but the largest wins came from three
+threads:
+
+- **Image delivery.** Audited the asset pipeline end-to-end. Replaced
+  unbounded image dimensions with responsive `srcset` tuned per breakpoint;
+  moved hero images to a dimensions-pinned format with explicit width and
+  height to eliminate layout shift; routed the surface through a scaler
+  service so above-the-fold images could be optimised at edge.
+- **Render-blocking audit.** Walked through the critical path on the slowest
+  templates with the team. Pulled third-party scripts off the critical
+  path, deferred consent-management chains where the contract allowed it,
+  and inlined the small slice of CSS that actually paints above the fold.
+- **Hybrid app state-sync.** The mobile surface ran the web app inside a
+  WebView with a native state singleton outside. State updates from the
+  native side were being lost across reloads, and the SPA lifecycle on
+  re-entry was firing effects against stale closures. Fixed by formalising
+  a state-rehydration contract that handled both SPA-route and
+  full-reload re-entries explicitly.
+
+## What this unlocked
+
+- Measurable, sustained LCP and CLS improvements across the surfaces that
+  mattered most — landing pages, article reads, and the conversion
+  funnels.
+- A perf budget that broke a build before regressions reached production,
+  rather than a dashboard nobody checked.
+- A documented hybrid-app re-entry contract that other teams could ship
+  against, instead of debugging the same state-staleness bug every quarter.
+- A team habit of reading real-user-monitoring data before believing
+  lab-test improvements.
+
+## What I&apos;d call out as lessons
+
+> Performance is a budgeting problem, not a one-shot optimisation problem.
+> The work isn&apos;t over when LCP improves — it&apos;s over when LCP
+> can&apos;t silently regress.
+
+Things I keep returning to from this work:
+
+- **RUM beats Lighthouse.** Lab metrics are a starting point. The number
+  that matters is what your real users actually feel, segmented by device
+  and connection.
+- **Layout shift is mostly a discipline problem.** Pin dimensions on every
+  image, every ad slot, every dynamically-injected component. The hard
+  part isn&apos;t fixing it — it&apos;s preventing the next regression.
+- **The state-sync contract is the bug.** Stale closures across same-render
+  effects, state surviving WebView reloads, SPA-route effects firing
+  against pre-route state — these all look like different bugs but they
+  share one root cause: an implicit contract that nobody wrote down.
+- **Performance budgets live in CI or they don&apos;t live at all.** A
+  Slack channel of complaints about a regression is a budget that already
+  failed.
