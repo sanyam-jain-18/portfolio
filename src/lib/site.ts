@@ -1,9 +1,12 @@
 export const site = {
   name: "Sanyam Jain",
-  role: "Senior Software Engineer / Architect",
-  location: "Bengaluru, India",
+  role: "Senior Full-Stack Engineer",
+  focus: "Frontend · Mobile · AI-augmented surfaces",
+  company: "Material+",
+  city: "Gurgaon, India",
+  pillLabel: "Currently at Material+ · Gurgaon",
   tagline:
-    "I build resilient web platforms — backend architecture, frontend performance, and AI-augmented product surfaces.",
+    "Frontend-leaning, full-stack. Seven years of owning features end-to-end and sweating how they feel in the user’s hand.",
   email: "sanyamjaino98@gmail.com",
   socials: {
     github: "https://github.com/micScofield",
@@ -14,8 +17,23 @@ export const site = {
 
 export const nav = [
   { href: "/", label: "Home" },
-  { href: "/work", label: "Work" },
-  { href: "/writing", label: "Writing" },
   { href: "/about", label: "About" },
-  { href: "/contact", label: "Contact" },
+] as const;
+
+export const currently = [
+  {
+    title: "Shipping high-scale frontend platforms",
+    description:
+      "Performance budgets, design-system contracts, and the un-glamorous infrastructure that keeps a frontend team fast.",
+  },
+  {
+    title: "Hybrid mobile apps with native bridges",
+    description:
+      "App experiences that don’t feel like webviews wearing a costume — clean state contracts, real native modules, and an iteration loop the team can live with.",
+  },
+  {
+    title: "Retrieval-augmented product surfaces",
+    description:
+      "Wiring LLMs into real product flows — hybrid retrieval, evaluation harnesses, and streaming UIs that hold up outside a demo.",
+  },
 ] as const;

@@ -1,72 +1,96 @@
-## The problem
+import { RagPipelineDiagram } from "@/components/diagrams/rag-pipeline";
+import { StackCard } from "@/components/diagrams/stack-card";
+import { RecallChart } from "@/components/diagrams/recall-chart";
+
+## The brief
 
 A shopping surface that worked beautifully for users who knew exactly what
 they wanted, and failed almost entirely for users who didn&apos;t. The
 catalog was rich, the filters were well-built, and the search bar was a
-keyword-matching system from a decade ago. The intent gap was obvious — a
-user typing &ldquo;something to wear to a beach wedding in October&rdquo;
-got either an empty page or a flood of unrelated results.
+keyword-matching system from a decade ago. Typing &ldquo;something to wear
+to a beach wedding in October&rdquo; got you either an empty page or a
+flood of unrelated results.
 
-The brief was to design a conversational layer that could turn that kind of
-natural-language intent into a small, curated, explainable product set —
-without hallucinating products that don&apos;t exist, and without depending
-on a black-box vendor stack we couldn&apos;t evaluate.
+I built the conversational layer end-to-end — the retrieval pipeline, the
+React widget, the streaming UI, and the evaluation harness — as a
+prototype the team could iterate on instead of a vendor box we couldn&apos;t
+open.
 
-## The approach
+<RagPipelineDiagram />
 
-I designed and prototyped the system end-to-end, with the architectural
-target being something a small team could maintain, evaluate, and iterate
-on — not a one-shot vendor integration.
+## What I shipped
 
-The retrieval pipeline came together in three layers:
+**The widget.** A streaming chat surface that renders LLM tokens as they
+arrive, with product cards that hydrate progressively from retrieval
+results. Suspense boundaries for the retrieval phase, streamed text from
+a route handler, and cancellation handling so a follow-up query doesn&apos;t
+race the previous one.
 
-- **Hybrid retrieval** — dense embeddings over product descriptions and
-  sparse BM25 over structured attributes (category, colour, season, price
-  band). The two signals catch different things; neither is sufficient
-  alone.
-- **HyDE query rewriting** — for vague queries, the system generates a
-  hypothetical product description first, then retrieves against that.
-  This dramatically improves recall on intent-style queries that don&apos;t
-  share vocabulary with the catalog.
-- **Reciprocal rank fusion** — the dense and sparse result lists are merged
-  by rank, not by score, which is robust to the scale differences between
-  the two systems.
+**Hybrid retrieval.** Dense embeddings over product descriptions plus
+sparse BM25 over structured attributes (category, colour, season, price
+band). Two signals catch different things — semantic similarity vs. exact
+attribute match — and neither is sufficient alone.
 
-The generation layer was deliberately constrained: the LLM only ever sees
-retrieved products and is instructed to recommend from that set, with
-reasoning. No free-form product invention. Every recommendation cites the
-product ID it came from, which makes the whole pipeline evaluable.
+**HyDE query rewriting.** For vague queries, the system generates a
+hypothetical product description first, then retrieves against that. Cost:
+one extra LLM call. Payoff: dramatic recall improvement on intent-style
+queries that don&apos;t share vocabulary with the catalog.
+
+**Reciprocal rank fusion.** The dense and sparse result lists are merged
+by rank, not by score — robust to the scale differences between the two
+systems.
+
+**Constrained generation.** The LLM only ever sees retrieved products and
+is prompted to recommend from that set, with reasoning. No free-form
+product invention. Every recommendation cites the product ID it came from,
+which is what makes the whole pipeline evaluable.
+
+<RecallChart />
+
+<StackCard
+  title="Stack"
+  caption="Tradeoffs chosen for evaluability — every layer is swappable behind its contract."
+  rows={[
+    { layer: "Embeddings", choice: "text-embedding-3-large (OpenAI)", note: "3072-dim, evaluated against e5-large-v2" },
+    { layer: "Vector store", choice: "Postgres + pgvector", note: "HNSW index, same DB as the catalog" },
+    { layer: "Sparse index", choice: "Elasticsearch · BM25", note: "tuned on category + attribute fields" },
+    { layer: "LLM (gen)", choice: "Claude 3.5 Sonnet", note: "constrained to retrieved-set selection" },
+    { layer: "LLM (HyDE)", choice: "Claude 3.5 Haiku", note: "cheaper, fast enough for rewrite" },
+    { layer: "Frontend", choice: "React · Next.js · SSE streaming", note: "ReadableStream + AbortController" },
+    { layer: "Eval harness", choice: "Custom golden-set runner", note: "recall@k, MRR, citation accuracy" },
+  ]}
+/>
 
 ## What this unlocked
 
-- A measurable intent-to-result pipeline that product, design, and
-  engineering could iterate on with shared evaluation harnesses.
-- A model-agnostic retrieval stack — swapping out the embedding model or
-  the LLM is a configuration change, not a re-architecture.
-- A clear separation between the retrieval quality problem and the
-  generation quality problem, which meant the team could improve each
+- A streaming surface that felt like talking to a stylist — not filling
+  in a form.
+- A model-agnostic retrieval stack — swapping the embedding model or the
+  LLM is a configuration change, not a re-architecture.
+- A clear separation between the retrieval-quality problem and the
+  generation-quality problem, so the team could improve each
   independently.
-- A demo surface that turned a vague product brief — &ldquo;make shopping
-  feel like talking to a stylist&rdquo; — into something stakeholders could
-  actually use, react to, and steer.
+- A demo that turned a vague product brief into something stakeholders
+  could actually steer.
 
-## What I&apos;d call out as lessons
+## Lessons I keep coming back to
 
 > The hard part of a RAG system isn&apos;t the LLM. It&apos;s the retrieval
-> pipeline and the evaluation harness.
-
-Things I keep returning to from this work:
+> pipeline, the streaming UI, and the evaluation harness.
 
 - **Hybrid retrieval beats either side alone.** Dense embeddings catch
   semantic similarity; sparse retrieval catches exact attribute matches.
   Production systems need both.
 - **HyDE is a cheat code for vague queries.** Letting the LLM rewrite the
   query before retrieval is one of the highest-leverage moves in the
-  pipeline. It costs almost nothing and changes the answer profile
-  entirely.
+  pipeline.
 - **Constrain the generation layer.** The LLM should pick from a set, not
   invent the set. The moment you let it generate freely, you&apos;ve given
   up the ability to evaluate.
+- **Streaming UIs are a UX problem.** Tokens arriving one at a time is the
+  easy part. Cancellation, partial product cards, late-arriving retrieval
+  results, follow-up queries that race the previous one — that&apos;s
+  where the React work lives.
 - **Evaluation harnesses are the deliverable.** A RAG system without a
   golden set is a vibes-driven engineering project. With one, every
   improvement is a measurable change against a known baseline.

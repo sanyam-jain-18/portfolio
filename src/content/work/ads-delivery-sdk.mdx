@@ -1,0 +1,137 @@
+import { PrebidFlowDiagram } from "@/components/diagrams/prebid-flow";
+import { RevenueShareDonut } from "@/components/diagrams/revenue-share-donut";
+import { TimeoutTradeoff } from "@/components/diagrams/timeout-tradeoff";
+import { StackCard } from "@/components/diagrams/stack-card";
+
+## The brief
+
+A consumer publisher running display ads across multiple brands and
+surfaces — desktop, mobile web, AMP, in-app webview — through a shared
+delivery SDK. The previous shape was a monolithic delivery script that
+had accumulated years of partner integrations, viewability vendors, and
+consent hooks. Revenue was leaking from places nobody could attribute:
+the auction timeout was too short for some surfaces, new partners took
+weeks to onboard, and three teams had three different numbers for the
+same metric.
+
+I owned the rebuild of the delivery layer — modular adapters, Prebid
+header bidding done deliberately, and the instrumentation taxonomy that
+lets revenue movement actually point at a code change.
+
+## How publishers make money — quickly
+
+Every ad slot on the page goes through an auction. **Header bidding**
+(via Prebid.js) runs that auction on the client, in parallel, across
+multiple demand sources (SSPs) — each one bids on the impression. The
+top bid is passed to the ad server (typically Google Ad Manager) as a
+key-value targeting parameter. The ad server runs its own final auction
+that includes the header-bid price, direct-sold campaigns, and the open
+exchange. The highest CPM wins and gets rendered.
+
+The whole thing happens client-side, in a few hundred milliseconds,
+while the page is loading. The interesting engineering — and the
+interesting revenue lever — is in how you tune that window.
+
+<PrebidFlowDiagram />
+
+## What I shipped
+
+**Modular delivery pipeline.** Four concerns with explicit contracts,
+each independently testable:
+
+- **Configuration resolution.** Page context → slot decisions. Pure,
+  no I/O, exhaustively unit-tested.
+- **Auction orchestration.** Prebid bootstrap, parallel SSP calls,
+  timeout race, consent gating.
+- **Partner adapters.** One module per SSP, minimal contract surface,
+  explicit lifecycle hooks. Adding a new partner is one file.
+- **Ad-server handoff.** Winning bid → GAM key-value targeting, with a
+  taxonomy I could read in the dashboards later.
+
+**Prebid integration done deliberately.** Configured per-slot bidder
+lists based on slot type and surface. Tuned the auction timeout per
+surface — longer on desktop where the network budget allows, tighter on
+mobile web where every 100ms of LCP shows up in the field data. Wired
+price-floor logic that varies by inventory tier.
+
+**Consent at the orchestration layer.** TCF v2 / GPP compliance plugged
+in once, not in every adapter. Bids only fire for users with the right
+consent string; GDPR/CCPA gating handled before any partner sees a
+request.
+
+**Instrumentation taxonomy.** A single event vocabulary that every
+layer emits into: `slot.defined`, `bid.requested`, `bid.received`,
+`bid.won`, `ad.rendered`, `ad.viewable`. Routed to one warehouse so
+revenue, product, and engineering all read the same numbers from the
+same funnel.
+
+**Lazy-loaded slots.** Intersection-observer-based deferral so
+below-the-fold ad calls don’t compete with critical content for network
+or CPU. Tuned per surface — what counts as &ldquo;below the fold&rdquo;
+on a mobile article isn’t what it means on a desktop home page.
+
+<RevenueShareDonut />
+
+## The auction-timeout tradeoff
+
+The single highest-leverage tuning decision in a Prebid setup is the
+auction timeout. Too short and you miss bids from slow SSPs — revenue
+falls. Too long and the ad call blocks the page — LCP regresses, users
+leave, the revenue you captured doesn’t matter.
+
+This is the chart that turned a six-month debate into a one-meeting
+decision:
+
+<TimeoutTradeoff />
+
+We landed at 1500 ms — the knee of the revenue curve, before the LCP
+curve takes off. The point isn’t the number; the point is that the
+team was tuning against data with a known cost on the perf side,
+instead of guessing.
+
+## Stack
+
+<StackCard
+  title="Stack"
+  caption="Vendor-agnostic boundaries. Every layer is swappable behind its contract."
+  rows={[
+    { layer: "Header bidding", choice: "Prebid.js", note: "open source, per-slot configured" },
+    { layer: "Ad server", choice: "Google Ad Manager (GAM360)", note: "final auction + reporting" },
+    { layer: "Identity", choice: "UID2 · ID5 · SharedID", note: "post-third-party-cookie identifiers" },
+    { layer: "Consent", choice: "TCF v2 · GPP", note: "gated at orchestration layer" },
+    { layer: "Telemetry", choice: "Prebid Analytics + custom warehouse", note: "single event taxonomy" },
+    { layer: "Frontend", choice: "TypeScript SDK · framework-agnostic", note: "embeddable on any surface" },
+  ]}
+/>
+
+## What this unlocked
+
+- New partner integrations went from multi-week, multi-team efforts to a
+  single adapter module behind a well-defined contract.
+- Auction-timeout tuning became a data-driven loop tied to real
+  bid-return-rate and LCP impact — not folklore.
+- Revenue attribution: changes to floors, timeouts, or bidder lists
+  could be measured against a baseline in days, not quarters.
+- Faster monetised templates — lazy loading and the new orchestration
+  shape both contributed to LCP wins on landing surfaces.
+
+## Lessons I keep coming back to
+
+> Prebid is config. The biggest revenue lever isn’t adding bidders —
+> it’s tuning the ones you have.
+
+- **Tune timeouts against perf, not folklore.** Every extra 250 ms of
+  auction window has a measurable LCP cost. If you can’t see both
+  curves at once, you’re flying blind.
+- **Consent belongs at the orchestration layer.** Push it into every
+  adapter and you’ll fight the same compliance bug forever.
+- **Lazy load aggressively, but instrument carefully.** A slot deferred
+  too long is unfilled inventory. A slot rendered too early is wasted
+  bandwidth and a CWV hit.
+- **One taxonomy, one warehouse, one number.** If revenue, product, and
+  engineering are reading different dashboards, the conversation about
+  &ldquo;what changed&rdquo; will never get past arguing about the
+  numbers.
+- **Identity is changing under your feet.** The third-party-cookie
+  deprecation didn’t kill header bidding — it raised the bar on
+  identity layers. Build the SDK so identifiers are swappable.

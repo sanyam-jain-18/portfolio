@@ -1,0 +1,74 @@
+import { HybridStackDiagram } from "@/components/diagrams/hybrid-stack";
+import { StateSyncFlow } from "@/components/diagrams/state-sync-flow";
+
+## The brief
+
+A consumer-facing mobile app — running on iOS and Android — built as a
+hybrid. The product team wanted the iteration speed of a web codebase, the
+install footprint of an app-store binary, and the polish of a native
+experience. The previous shape was a WebView wrapped around a loosely-bound
+SPA, and it showed: dropped state on reload, gestures that felt like web,
+native APIs that were either missing or hacked in.
+
+I picked up the app shell, the native bridges, and the state-sync layer
+between them — three threads that needed to feel like a single product.
+
+<HybridStackDiagram />
+
+## What I shipped
+
+**The app shell.** A host that initialises native plugins, restores session
+state, and hands control to the SPA only once the runtime contract is
+ready. The shell is the thing that decides what runs when — splash, deep
+link, push notification entry, background return — and the SPA trusts the
+contract instead of guessing.
+
+**Native iOS modules in Swift.** Image resizing, share-sheet wiring, secure
+storage, and the camera/photo bridges. These started as plugin stubs and
+grew into a small native module surface with explicit return contracts.
+Naming convention: plain camelCase Swift extensions, no `+` separators
+(a habit I picked up after losing time to filename quirks in CI).
+
+**State-sync between native and webview.** The hardest bug I shipped a fix
+for in this codebase: a state singleton that lived in native, was injected
+into the WebView, and went stale across reloads and lifecycle transitions.
+The fix was to formalise the rehydration contract — explicit re-entry
+points, each with their own handler instead of one effect that hoped for
+the best.
+
+<StateSyncFlow />
+
+**A sync workflow that doesn’t break the team.** Every edit to the web code
+needs a sync step before the native build sees it. I wrote a small wrapper
+that runs sync, surfaces the diff, and tells you when a native rebuild is
+genuinely required vs. when a hot reload is enough.
+
+## What this unlocked
+
+- A mobile app that felt native enough that users stopped complaining
+  about &ldquo;the web feel&rdquo; on the surfaces I&apos;d touched.
+- A documented native ↔ webview contract that other engineers could ship
+  against instead of debugging the same state-staleness bug each quarter.
+- A native module surface that the team could extend without learning the
+  plugin internals from scratch.
+- A sync workflow that turned a recurring foot-gun into a one-line command.
+
+## Lessons I keep coming back to
+
+> The hardest part of a hybrid app isn&apos;t the framework. It&apos;s the
+> contract between the web side and the native side — and most teams never
+> write it down.
+
+- **Lifecycle is the bug.** Stale closures across same-render effects,
+  state surviving WebView reloads, route effects firing against pre-route
+  state — these look like four different bugs. They&apos;re the same bug:
+  an implicit contract nobody wrote down.
+- **Native modules are worth the ceremony.** A 30-line Swift extension
+  beats a 200-line plugin shim every time the platform gives you the
+  primitive you need.
+- **Sync workflows are infrastructure.** &ldquo;Just remember to run
+  sync&rdquo; is a bug waiting to happen. Wrap it, surface it, make the
+  rebuild signal obvious.
+- **Test on a real device.** Simulators lie about gestures, scroll
+  behaviour, keyboard insets, and image performance. The bug you can&apos;t
+  reproduce on a sim is the bug your users have every day.

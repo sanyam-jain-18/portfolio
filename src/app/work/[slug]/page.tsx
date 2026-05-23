@@ -1,6 +1,8 @@
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
-import { caseStudies, getCaseStudy } from "@/lib/work";
+import { readFile } from "node:fs/promises";
+import { join } from "node:path";
+import { caseStudies, getCaseStudy, getAdjacentCaseStudies } from "@/lib/work";
 import { CaseStudyLayout } from "@/components/case-study-layout";
 
 export function generateStaticParams() {
@@ -31,9 +33,19 @@ export default async function CaseStudyPage({
   if (!study) notFound();
 
   const { default: Content } = await import(`@/content/work/${slug}.mdx`);
+  const rawContent = await readFile(
+    join(process.cwd(), "src", "content", "work", `${slug}.mdx`),
+    "utf8"
+  );
+  const { prev, next } = getAdjacentCaseStudies(slug);
 
   return (
-    <CaseStudyLayout study={study}>
+    <CaseStudyLayout
+      study={study}
+      rawContent={rawContent}
+      prev={prev}
+      next={next}
+    >
       <Content />
     </CaseStudyLayout>
   );
