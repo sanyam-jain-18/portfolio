@@ -86,14 +86,6 @@ If a deploy fails:
 3. The previous successful deploy stays live until the new one succeeds, so
    production is never broken by a bad push
 
-## Domain & DNS
-
-- Domain registered with **Namecheap** (`sanyamjain.xyz`)
-- DNS managed at Namecheap, pointing at Vercel:
-  - `A @ → 216.198.79.1`
-  - `CNAME www → c8e0a9f7788ab26e.vercel-dns-017.com.`
-- SSL provisioned automatically by Vercel via Let's Encrypt
-
 ## What's deliberately not here
 
 - No CMS — content lives in MDX next to the code
