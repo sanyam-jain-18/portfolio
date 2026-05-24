@@ -55,7 +55,7 @@ export function EventFlowDiagram() {
               .step-rest { stroke: var(--color-muted); stroke-width: 1.3; fill: none; }
               .step-event { stroke: var(--color-accent); stroke-width: 1.4; fill: none; stroke-dasharray: 4 3; }
               .step-label { fill: var(--color-muted); font: 400 10px ui-sans-serif, sans-serif; }
-              .step-bg { fill: var(--color-bg); }
+              .step-bg { fill: var(--color-background); }
               .lane-box { fill: var(--color-surface); stroke: var(--color-border-strong); }
               .lane-box-accent { fill: color-mix(in srgb, var(--color-accent) 12%, transparent); stroke: var(--color-accent); }
             `}</style>

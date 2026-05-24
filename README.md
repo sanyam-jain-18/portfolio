@@ -63,20 +63,32 @@ src/
 A change to `src/lib/resume.ts` updates **both** the on-page preview and the
 generated PDF — they read the same data.
 
-## Deploying changes
+## Change workflow
 
-Vercel auto-deploys on push to `main`. The flow:
+**New features go through a pull request — no direct pushes to `main`.**
+`main` is the production branch; Vercel auto-deploys it. Branching keeps a
+reviewable history and forces a moment of "is this actually ready?" before
+shipping.
 
 ```bash
-# 1. make the change locally, verify in `npm run dev`
+# 1. branch off main
+git checkout -b feat/<short-description>
+
+# 2. make the change locally, verify with `npm run dev`
+
+# 3. commit and push the branch
 git add <files>
 git commit -m "feat(scope): describe the change"
-git push origin main
+git push -u origin feat/<short-description>
+
+# 4. open a PR
+gh pr create --fill
 ```
 
-Vercel picks up the push, runs `next build`, and rolls the new build to
-production within ~2 min. Preview deploys are created automatically for any
-non-`main` branch pushed to the remote.
+Vercel creates a **preview deploy** for every branch pushed to the remote —
+the URL appears as a check on the PR. Verify the preview, then merge to
+`main`. Vercel picks up the merge, runs `next build`, and rolls the new
+build to production within ~2 min.
 
 If a deploy fails:
 
