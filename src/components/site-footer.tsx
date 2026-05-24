@@ -27,7 +27,8 @@ export function SiteFooter() {
               {site.name}
             </p>
             <p className="mt-2 text-sm text-muted leading-relaxed max-w-xs">
-              {site.role} at {site.company}, {site.city}. {site.focus}.
+              {site.role} at {site.company}, {site.city}. Seven years of
+              shipping production-grade product surfaces.
             </p>
           </div>
           <div>
@@ -72,12 +73,9 @@ export function SiteFooter() {
           </div>
         </div>
 
-        <div className="mt-14 pt-6 border-t border-border/60 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
+        <div className="mt-14 pt-6 border-t border-border/60">
           <p className="text-xs text-muted-2 font-mono">
             &copy; {new Date().getFullYear()} {site.name}. All rights reserved.
-          </p>
-          <p className="text-xs text-muted-2 italic">
-            Hand-built. No templates.
           </p>
         </div>
       </div>

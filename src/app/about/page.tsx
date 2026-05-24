@@ -27,8 +27,7 @@ const skills = [
     items: [
       "Capacitor hybrid apps (iOS + Android)",
       "Native iOS in Swift — modules & extensions",
-      "React Native",
-      "Native ↔ webview state contracts",
+      "Native and webview state contracts",
       "App shell, deep links, push notifications",
     ],
   },
@@ -36,10 +35,9 @@ const skills = [
     group: "Backend & infra",
     items: [
       "Node.js · TypeScript",
-      "Java · Spring Boot",
-      "REST · GraphQL · streaming endpoints",
-      "Microservices · event-driven systems",
+      "Microservices · event-driven systems (NATS, queues)",
       "Docker · CI/CD pipelines",
+      "Observability — OpenSearch · New Relic",
     ],
   },
   {
@@ -48,8 +46,14 @@ const skills = [
       "Retrieval-augmented generation (RAG)",
       "Hybrid retrieval — dense + sparse + RRF",
       "HyDE query rewriting",
-      "Streaming LLM UIs (SSE · ReadableStream)",
-      "Evaluation harnesses & golden sets",
+    ],
+  },
+  {
+    group: "Working knowledge",
+    items: [
+      "Java · Spring Boot",
+      "Python",
+      "Data pipelines (BigQuery)",
     ],
   },
 ];
@@ -71,7 +75,7 @@ const channels = [
   },
   {
     label: "GitHub",
-    value: "micScofield",
+    value: "sanyam-jain-18",
     href: site.socials.github,
     Icon: GithubIcon,
     note: "Code & side projects",
@@ -148,7 +152,7 @@ export default function AboutPage() {
                 <dt className="text-muted-2 text-xs uppercase tracking-wider">
                   Experience
                 </dt>
-                <dd className="mt-1 text-foreground">7+ years</dd>
+                <dd className="mt-1 text-foreground">Seven years</dd>
               </div>
               <div>
                 <dt className="text-muted-2 text-xs uppercase tracking-wider">
@@ -227,9 +231,7 @@ export default function AboutPage() {
             Let&apos;s talk.
           </h2>
           <p className="mt-4 text-lg text-muted max-w-2xl leading-relaxed">
-            I&apos;m always happy to hear about interesting problems —
-            frontend at scale, mobile, hybrid apps, or AI-augmented product
-            surfaces. Email is the fastest path.
+            Email lands fastest. LinkedIn works too if that&apos;s easier.
           </p>
         </Reveal>
 

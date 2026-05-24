@@ -72,6 +72,17 @@ export function CaseStudyLayout({
                   </li>
                 ))}
               </ul>
+              {study.repoUrl && (
+                <a
+                  href={study.repoUrl}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="inline-flex items-center gap-1.5 text-xs px-2.5 py-1 rounded-sm border border-accent/40 text-accent hover:bg-accent/10 transition-colors font-mono"
+                >
+                  Source
+                  <ArrowUpRight className="w-3 h-3" aria-hidden="true" />
+                </a>
+              )}
             </div>
           </Reveal>
         </header>

@@ -1,0 +1,87 @@
+import { ContentfulFlow } from "@/components/diagrams/contentful-flow";
+import { RenderStrategyDonut } from "@/components/diagrams/render-strategy-donut";
+import { StackCard } from "@/components/diagrams/stack-card";
+
+## The brief
+
+This one&apos;s honest about its origin: I built it to learn. The goal
+was to understand a headless CMS pipeline end-to-end — schema modelling,
+the management API, draft/preview flows, rich-text rendering, and the
+build-time vs request-time trade-offs Next.js gives you on top.
+
+I picked Contentful because it has both a Content Delivery API (read,
+fast) and a Content Management API (write, programmable). That second
+one mattered: I wanted to provision the space from code, not click
+around an admin UI.
+
+<ContentfulFlow />
+
+## What I built
+
+**A CLI that provisions the Contentful space.** `scripts/setup.js` is
+an interactive script — using `inquirer` for prompts and
+`contentful-management` for the API — that creates the space, applies a
+content model migration, and seeds entries. The schema (Post, Author,
+Category) lives in version control as JSON and gets re-applied on every
+fresh setup. Treat the CMS like infrastructure, not a database somebody
+configured once.
+
+**A Next.js front-end that pulls structured content.** Posts and
+categories render via `getStaticProps` + `getStaticPaths`, so every
+public route is a pre-built HTML file. Rich-text fields use
+`@contentful/rich-text-react-renderer` with custom renderers for
+embedded assets and inline code, so the editor experience and the
+front-end stay in sync.
+
+**On-demand revalidation.** Editors don&apos;t wait for a deploy.
+Contentful fires a webhook on publish, which hits a Next.js
+revalidation route that re-renders only the affected pages. Static
+performance, near-live editor feedback.
+
+<RenderStrategyDonut />
+
+**Preview mode for drafts.** Logged-in editors get a separate render
+path that pulls from the Preview API and serves un-published entries.
+Same component tree, different data source — a clean illustration of
+why decoupling the renderer from the source pays off.
+
+<StackCard
+  title="Stack"
+  rows={[
+    { layer: "CMS", choice: "Contentful", note: "Headless, schema in code" },
+    { layer: "Framework", choice: "Next.js (Pages router)", note: "SSG + ISR" },
+    { layer: "Provisioner", choice: "scripts/setup.js", note: "inquirer + management API" },
+    { layer: "Rich text", choice: "@contentful/rich-text-react-renderer", note: "custom renderers" },
+    { layer: "Styling", choice: "Tailwind CSS", note: "utility-first" },
+    { layer: "Schema control", choice: "contentful-import", note: "exports.json in repo" },
+  ]}
+  caption="Stack at a glance. The interesting layer is the provisioner — it turns CMS setup into a repeatable script instead of an undocumented click-path."
+/>
+
+## What this taught me
+
+> A headless CMS is just a database with an opinionated editor on top.
+> Treating it like one — schema in code, migrations in code, seed data
+> in code — gets you most of the way to a real content pipeline.
+
+- **Schema-in-code is the unlock.** The moment the content model lives
+  in the repo, you can review it, diff it, roll it back. Without that,
+  the CMS becomes a place where state mysteriously appears.
+- **ISR is the right default for content sites.** Pages stay static
+  (fast, edge-cached) but get re-rendered on publish. You don&apos;t
+  have to pick between &ldquo;static and stale&rdquo; or &ldquo;dynamic
+  and slow&rdquo;.
+- **Preview mode is a separation-of-concerns test.** If switching the
+  data source breaks half your components, your renderer was too
+  tightly coupled to the live API in the first place.
+- **The management API is underused.** Most teams script Stripe and
+  Auth0 and skip CMS automation. Same idea, same payoff.
+
+## Why this is on the site
+
+It&apos;s a learning project, not a shipped product — and I&apos;d
+rather say that out loud than dress it up. The pipeline is small
+enough to understand top-to-bottom in one sitting, and big enough to
+have a real opinion about. That&apos;s the kind of side project I find
+useful: small enough to finish, sharp enough to teach a specific
+thing.

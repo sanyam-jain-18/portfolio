@@ -1,0 +1,124 @@
+import { ServiceTopology } from "@/components/diagrams/service-topology";
+import { EventFlowDiagram } from "@/components/diagrams/event-flow-diagram";
+import { EventsPerService } from "@/components/diagrams/events-per-service";
+import { StackCard } from "@/components/diagrams/stack-card";
+
+## The brief
+
+A self-directed build I took seriously: a production-shaped ticket
+marketplace — list a ticket, lock it on order, charge the buyer,
+release the lock if the buyer ghosts. Standard product story. The
+interesting part wasn&apos;t the product. It was the architecture.
+
+I wanted to see what it actually takes to run an event-driven system
+end-to-end: six services on Kubernetes, per-service databases, durable
+event delivery, optimistic concurrency to keep the model honest under
+races, Stripe in the loop, and a CI/CD pipeline shipping it to Google
+Kubernetes Engine. No tutorial shortcuts. No mocks where the real
+thing was the point.
+
+<ServiceTopology />
+
+## How the pieces fit
+
+**Six services, one bus.** Auth, tickets, orders, payments,
+expiration, and a Next.js SSR client. Each service owns its own
+MongoDB — no shared database — and every cross-service step travels
+through NATS Streaming with durable subscriptions and queue groups.
+ingress-nginx terminates TLS at the edge and routes by host.
+
+**Auth stays off the bus.** It issues JWTs and lets every other
+service verify them statelessly. No login event published. No "user
+created" listener on the other side. Keeping auth flat made the rest
+of the system replayable without touching identity.
+
+**Orders is the coordinator.** It listens for ticket lifecycle
+events to keep its local read model fresh, publishes order
+lifecycle events for the other services to react to, and accepts
+inbound payment-confirmation events to flip status. That centrality
+is the reason optimistic concurrency on the order model was
+non-negotiable.
+
+<EventFlowDiagram />
+
+## The hard parts
+
+**Optimistic concurrency on a shared aggregate.** When two consumers
+process events for the same order out of order, the naive
+last-write-wins behaviour silently corrupts state. Every model has a
+`version` field, every save asserts the version it saw, and
+out-of-order updates retry against the latest. Mongoose
+`@save-version` plugin pattern, applied uniformly across services.
+
+**Per-service databases mean per-service migrations.** Every service
+ships its own Mongoose models, and its own data lives in its own DB
+namespace. No foreign keys. No JOINs across boundaries. Cross-service
+queries became "publish, listen, project into a local read model" —
+which is exactly the discipline event-driven systems are supposed to
+enforce.
+
+**The expiration service is the boring hero.** It exists to do one
+thing: when an `order:created` event arrives, schedule a Bull job; if
+the order isn&apos;t paid before the deadline, publish
+`expiration:complete` so orders can flip status and tickets can
+release the lock. A small Redis-backed service that earns its place
+the first time you imagine doing this with cron and a polling loop.
+
+<EventsPerService />
+
+**Durable subscriptions with queue groups.** NATS Streaming queue
+groups give you horizontal scale (multiple replicas, one delivery)
+plus durable subscriptions (replay from last-acked when a consumer
+restarts). The naming convention — one queue group per service per
+event — is the kind of detail you only learn after watching a
+duplicated event corrupt your data once.
+
+<StackCard
+  title="Stack"
+  rows={[
+    { layer: "Runtime", choice: "Node.js + TypeScript", note: "Express on every service" },
+    { layer: "Data", choice: "MongoDB · per-service", note: "Mongoose, optimistic concurrency" },
+    { layer: "Bus", choice: "NATS Streaming", note: "durable subs · queue groups" },
+    { layer: "Payments", choice: "Stripe", note: "webhook + token charge" },
+    { layer: "Scheduling", choice: "Bull + Redis", note: "expiration service" },
+    { layer: "Edge", choice: "ingress-nginx on GKE", note: "host-based routing" },
+    { layer: "Build", choice: "Docker · per-service", note: "shared base image" },
+    { layer: "Dev loop", choice: "Skaffold", note: "watch + sync + redeploy" },
+    { layer: "CI/CD", choice: "GCP Cloud Build", note: "auto-deploy on main" },
+    { layer: "Client", choice: "Next.js (SSR)", note: "shares cookie auth" },
+  ]}
+  caption="Production-shaped from the ground up. The interesting decisions were 'don't share a database' and 'don't call services directly' — everything else followed."
+/>
+
+## What this build taught me
+
+> Microservices is not a deployment topology. It&apos;s a contract about
+> who owns what state, and what happens when that state is wrong.
+
+- **Per-service databases are the load-bearing decision.** Every other
+  microservices pattern — events, retries, idempotency, eventual
+  consistency — exists because you committed to this one. Skip it,
+  and the rest is theatre.
+- **Version every aggregate.** Optimistic concurrency is cheap to add
+  and free to ignore until the day a race silently corrupts a record.
+  By that day, you can&apos;t add it without a migration. Add it on
+  day one.
+- **Idempotency is a code-review checklist, not a runtime feature.**
+  Every event handler has to be safe to deliver twice. If a reviewer
+  can&apos;t answer "what happens if we redeliver this" in one
+  sentence, the handler isn&apos;t ready.
+- **CI/CD that actually deploys is a teacher.** Pushing to GKE on
+  every main commit forced me to take secrets, image hygiene, and
+  rollout health seriously in a way local development never would.
+
+## Why this is on the site
+
+I didn&apos;t ship this to users. It runs because I made it run — six
+services, a CI pipeline, a real Stripe key in a real environment, a
+real Mongo cluster per service. What I got out of it is the muscle
+memory for the parts of a distributed system that don&apos;t show up
+in any tutorial: the contract you have to keep with your future self
+when state is spread across boxes.
+
+That&apos;s why it&apos;s here. It&apos;s the case study where my
+backend instincts come from.

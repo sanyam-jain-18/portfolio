@@ -1,3 +1,11 @@
+import type { ComponentType } from "react";
+import { HybridStackCard } from "@/components/diagrams/hybrid-stack-card";
+import { RagRecallCard } from "@/components/diagrams/rag-recall-card";
+import { AdsRevenueCard } from "@/components/diagrams/ads-revenue-card";
+import { PerfLcpCard } from "@/components/diagrams/perf-lcp-card";
+import { ServiceConstellation } from "@/components/diagrams/service-constellation";
+import { ContentfulFlowCard } from "@/components/diagrams/contentful-flow-card";
+
 export type CaseStudy = {
   slug: string;
   title: string;
@@ -5,6 +13,10 @@ export type CaseStudy = {
   role: string;
   period: string;
   tags: string[];
+  isLearning?: boolean;
+  isSelfDirected?: boolean;
+  repoUrl?: string;
+  cardVisual?: ComponentType;
 };
 
 export const caseStudies: CaseStudy[] = [
@@ -16,6 +28,7 @@ export const caseStudies: CaseStudy[] = [
     role: "Senior Engineer · Mobile / Frontend",
     period: "2024 – 2025",
     tags: ["Capacitor", "iOS / Swift", "React", "Mobile", "Native bridges"],
+    cardVisual: HybridStackCard,
   },
   {
     slug: "rag-conversational-commerce",
@@ -25,6 +38,7 @@ export const caseStudies: CaseStudy[] = [
     role: "Senior Engineer · GenAI / Frontend",
     period: "2025",
     tags: ["GenAI", "RAG", "React", "Streaming UI", "Embeddings"],
+    cardVisual: RagRecallCard,
   },
   {
     slug: "ads-delivery-sdk",
@@ -34,6 +48,7 @@ export const caseStudies: CaseStudy[] = [
     role: "Senior Engineer · Ads / Frontend",
     period: "2024 – 2025",
     tags: ["Ads", "Prebid", "Header bidding", "Revenue", "Performance"],
+    cardVisual: AdsRevenueCard,
   },
   {
     slug: "frontend-performance",
@@ -43,6 +58,37 @@ export const caseStudies: CaseStudy[] = [
     role: "Senior Engineer · Frontend",
     period: "2024 – 2025",
     tags: ["Core Web Vitals", "React", "Hybrid apps", "Performance", "RUM"],
+    cardVisual: PerfLcpCard,
+  },
+  {
+    slug: "microservices-ticketing",
+    title: "Event-driven ticketing on Kubernetes",
+    summary:
+      "A self-directed build I took seriously: six TypeScript services on GKE coordinating through NATS Streaming, with per-service Mongo, optimistic concurrency, Stripe in the loop, and a CI/CD pipeline that actually deploys.",
+    role: "Self-directed · Distributed systems",
+    period: "2022 – 2023",
+    tags: [
+      "TypeScript",
+      "Kubernetes",
+      "NATS",
+      "MongoDB",
+      "Stripe",
+      "Event-driven",
+    ],
+    isSelfDirected: true,
+    repoUrl: "https://github.com/sanyam-jain-18/microservices-kubernetes-gcloud",
+    cardVisual: ServiceConstellation,
+  },
+  {
+    slug: "contentful-cms-pipeline",
+    title: "A headless CMS pipeline, end-to-end",
+    summary:
+      "A learning project: built a Contentful + Next.js content pipeline from scratch — schema-in-code, a CLI that provisions the space, SSG + on-demand ISR, draft preview mode, and a custom rich-text renderer.",
+    role: "Self-directed · Learning project",
+    period: "2023",
+    tags: ["Contentful", "Next.js", "Headless CMS", "ISR", "Tailwind"],
+    isLearning: true,
+    cardVisual: ContentfulFlowCard,
   },
 ];
 

@@ -1,10 +1,12 @@
 import Link from "next/link";
-import { ArrowUpRight, ArrowRight, Sparkles } from "lucide-react";
-import { site, currently } from "@/lib/site";
+import { ArrowUpRight, ArrowRight } from "lucide-react";
+import { site } from "@/lib/site";
 import { caseStudies } from "@/lib/work";
+import { projects } from "@/lib/projects";
 import { StatusPill } from "@/components/status-pill";
 import { Reveal } from "@/components/reveal";
 import { StaggerList, StaggerItem } from "@/components/stagger";
+import { OtherWorkCard } from "@/components/other-work-card";
 
 export default function HomePage() {
   return (
@@ -63,41 +65,6 @@ export default function HomePage() {
         </div>
       </section>
 
-      {/* Currently */}
-      <section className="border-t border-border/70 bg-surface/30">
-        <div className="container-page py-20 sm:py-24">
-          <Reveal>
-            <div className="flex items-center gap-2 text-accent text-xs uppercase tracking-[0.22em] mb-4">
-              <Sparkles className="w-3.5 h-3.5" aria-hidden="true" />
-              Currently
-            </div>
-          </Reveal>
-          <Reveal delay={0.08}>
-            <h2 className="text-2xl sm:text-3xl font-semibold tracking-tight max-w-2xl">
-              Three threads I&apos;m pulling on right now.
-            </h2>
-          </Reveal>
-          <StaggerList className="mt-12 grid gap-6 sm:gap-8 sm:grid-cols-2 lg:grid-cols-3">
-            {currently.map((thread, i) => (
-              <StaggerItem
-                key={thread.title}
-                className="group relative rounded-lg border border-border bg-background p-6 sm:p-7 card-hover hover:border-accent/40 hover:-translate-y-0.5"
-              >
-                <div className="text-xs font-mono text-muted-2 mb-4">
-                  / {String(i + 1).padStart(2, "0")}
-                </div>
-                <h3 className="text-base sm:text-lg font-semibold text-foreground leading-snug">
-                  {thread.title}
-                </h3>
-                <p className="mt-3 text-sm text-muted leading-relaxed">
-                  {thread.description}
-                </p>
-              </StaggerItem>
-            ))}
-          </StaggerList>
-        </div>
-      </section>
-
       {/* Selected work */}
       <section id="selected-work" className="container-page py-24 sm:py-28 scroll-mt-20">
         <Reveal>
@@ -111,21 +78,33 @@ export default function HomePage() {
           </div>
         </Reveal>
         <StaggerList className="grid gap-px bg-border rounded-xl overflow-hidden border border-border">
-          {caseStudies.map((cs, i) => (
+          {caseStudies.map((cs, i) => {
+            const Visual = cs.cardVisual;
+            return (
             <StaggerItem key={cs.slug} className="bg-background">
               <Link
                 href={`/work/${cs.slug}`}
                 className="block p-6 sm:p-9 hover:bg-surface/60 transition-colors group relative"
               >
-                <div className="flex items-start justify-between gap-6">
-                  <div className="flex-1 min-w-0">
-                    <div className="flex items-center gap-3 mb-4">
+                <div className="grid gap-6 sm:gap-8 sm:grid-cols-[1fr_minmax(0,220px)_auto] items-start">
+                  <div className="min-w-0 order-2 sm:order-1">
+                    <div className="flex items-center gap-3 mb-4 flex-wrap">
                       <span className="text-xs font-mono text-muted-2">
                         {String(i + 1).padStart(2, "0")} ·
                       </span>
                       <p className="text-xs uppercase tracking-[0.2em] text-muted">
                         {cs.period} · {cs.role}
                       </p>
+                      {cs.isSelfDirected && (
+                        <span className="text-[10px] uppercase tracking-[0.18em] font-mono px-2 py-0.5 rounded-sm border border-accent/40 text-accent">
+                          Self-directed build
+                        </span>
+                      )}
+                      {cs.isLearning && (
+                        <span className="text-[10px] uppercase tracking-[0.18em] font-mono px-2 py-0.5 rounded-sm border border-accent/40 text-accent">
+                          Learning project
+                        </span>
+                      )}
                     </div>
                     <h3 className="text-xl sm:text-2xl lg:text-3xl font-semibold tracking-tight group-hover:text-accent transition-colors">
                       {cs.title}
@@ -144,15 +123,51 @@ export default function HomePage() {
                       ))}
                     </ul>
                   </div>
+                  {Visual && (
+                    <div className="order-1 sm:order-2 w-full sm:w-[220px] flex items-center justify-center rounded-md bg-surface/40 border border-border/70 p-3 min-h-[8.5rem]">
+                      <Visual />
+                    </div>
+                  )}
                   <ArrowUpRight
-                    className="w-5 h-5 sm:w-6 sm:h-6 text-muted-2 group-hover:text-accent group-hover:translate-x-0.5 group-hover:-translate-y-0.5 transition-all flex-shrink-0 mt-1"
+                    className="order-3 w-5 h-5 sm:w-6 sm:h-6 text-muted-2 group-hover:text-accent group-hover:translate-x-0.5 group-hover:-translate-y-0.5 transition-all flex-shrink-0 mt-1 hidden sm:block"
                     aria-hidden="true"
                   />
                 </div>
               </Link>
             </StaggerItem>
-          ))}
+            );
+          })}
         </StaggerList>
+      </section>
+
+      {/* Other work */}
+      <section
+        id="other-work"
+        className="border-t border-border/70 bg-surface/30 scroll-mt-20"
+      >
+        <div className="container-page py-24 sm:py-28">
+          <Reveal>
+            <div className="mb-10 sm:mb-14">
+              <p className="text-xs uppercase tracking-[0.22em] text-accent mb-3">
+                Other things I&apos;ve built
+              </p>
+              <h2 className="text-2xl sm:text-4xl font-semibold tracking-tight">
+                Side projects that taught me something specific.
+              </h2>
+              <p className="mt-4 text-muted max-w-2xl leading-relaxed">
+                Smaller surfaces than the case studies above — built to
+                explore one idea each. Source is up if you want to dig in.
+              </p>
+            </div>
+          </Reveal>
+          <StaggerList className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
+            {projects.map((p) => (
+              <StaggerItem key={p.slug}>
+                <OtherWorkCard project={p} />
+              </StaggerItem>
+            ))}
+          </StaggerList>
+        </div>
       </section>
 
       {/* CTA strip */}

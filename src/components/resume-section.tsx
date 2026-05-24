@@ -88,7 +88,7 @@ export function ResumeSection() {
                   rel="noopener noreferrer"
                   className="text-accent hover:underline"
                 >
-                  github/micScofield
+                  github/sanyam-jain-18
                 </a>{" "}
                 ·{" "}
                 <a
@@ -102,8 +102,8 @@ export function ResumeSection() {
               </p>
             </header>
 
-            <section className="mt-6">
-              <h4 className="text-xs uppercase tracking-[0.2em] text-accent font-mono mb-3">
+            <section className="mt-8">
+              <h4 className="text-xs uppercase tracking-[0.2em] text-accent font-mono mb-4">
                 Summary
               </h4>
               <p className="text-sm text-foreground/90 leading-relaxed">
@@ -165,7 +165,7 @@ export function ResumeSection() {
             </section>
 
             <section className="mt-8">
-              <h4 className="text-xs uppercase tracking-[0.2em] text-accent font-mono mb-3">
+              <h4 className="text-xs uppercase tracking-[0.2em] text-accent font-mono mb-4">
                 Education
               </h4>
               <ul className="space-y-2">
@@ -183,10 +183,6 @@ export function ResumeSection() {
               </ul>
             </section>
 
-            <p className="mt-10 pt-4 border-t border-border text-xs text-muted-2 italic">
-              Placeholder content — real resume content lands in a follow-up
-              pass.
-            </p>
           </div>
         </div>
       )}
