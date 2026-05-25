@@ -21,7 +21,7 @@ export default function HomePage() {
           aria-hidden="true"
           className="absolute inset-0 bg-hero-glow pointer-events-none"
         />
-        <div className="container-page relative pt-24 sm:pt-32 pb-28 sm:pb-36">
+        <div className="container-page relative pt-24 sm:pt-32 pb-16 sm:pb-20">
           <Reveal>
             <StatusPill />
           </Reveal>
