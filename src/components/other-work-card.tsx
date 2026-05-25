@@ -9,7 +9,7 @@ export function OtherWorkCard({ project }: { project: Project }) {
       href={project.repoUrl}
       target="_blank"
       rel="noopener noreferrer"
-      className="group relative flex flex-col rounded-lg border border-border bg-background p-6 sm:p-7 card-hover hover:border-accent/40 hover:-translate-y-0.5"
+      className="group relative flex flex-col min-w-0 rounded-lg border border-border bg-background p-6 sm:p-7 card-hover hover:border-accent/40 hover:-translate-y-0.5"
     >
       <div className="flex items-start justify-between gap-4 mb-5">
         <h3 className="text-base sm:text-lg font-semibold text-foreground leading-snug group-hover:text-accent transition-colors">
