@@ -162,7 +162,7 @@ export default function HomePage() {
           </Reveal>
           <StaggerList className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
             {projects.map((p) => (
-              <StaggerItem key={p.slug}>
+              <StaggerItem key={p.slug} className="min-w-0">
                 <OtherWorkCard project={p} />
               </StaggerItem>
             ))}
