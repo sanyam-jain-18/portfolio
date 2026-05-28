@@ -22,8 +22,8 @@ const LINE = 1.45;
 
 const styles = StyleSheet.create({
   page: {
-    paddingTop: 30,
-    paddingBottom: 22,
+    paddingTop: 28,
+    paddingBottom: 14,
     paddingLeft: 36,
     paddingRight: 36,
     fontSize: 10,
@@ -64,17 +64,17 @@ const styles = StyleSheet.create({
     color: COLORS.accent,
     letterSpacing: 1.5,
     textTransform: "uppercase",
-    marginBottom: 8,
+    marginBottom: 6,
   },
   section: {
-    marginBottom: 8,
+    marginBottom: 6,
   },
   summary: {
     fontSize: 10,
     color: COLORS.fg,
   },
   expBlock: {
-    marginBottom: 10,
+    marginBottom: 8,
   },
   expHeaderRow: {
     flexDirection: "row",
@@ -151,11 +151,6 @@ function githubHandleFromUrl(url: string): string {
   return url.replace(/^https?:\/\/(www\.)?github\.com\//, "");
 }
 
-function linkedinHandleFromUrl(url: string): string {
-  const m = url.match(/linkedin\.com\/in\/([^/?]+)/);
-  return m ? `in/${m[1]}` : url;
-}
-
 // Helvetica core font lacks glyphs for some Unicode chars. Map them to ASCII
 // equivalents so the PDF renders cleanly (and stays ATS-parsable).
 function sanitizeForHelvetica(text: string): string {
@@ -176,11 +171,10 @@ function Bullet({ text }: { text: string }) {
 
 export function ResumePdfDocument() {
   const githubHandle = githubHandleFromUrl(site.socials.github);
-  const linkedinHandle = linkedinHandleFromUrl(site.socials.linkedin);
 
   return (
     <Document
-      title={`${site.name} — Resume`}
+      title={`${site.name} - Resume`}
       author={site.name}
       subject="Resume / CV"
     >
@@ -188,19 +182,21 @@ export function ResumePdfDocument() {
         {/* Header */}
         <Text style={styles.name}>{site.name}</Text>
         <Text style={styles.roleLine}>
-          {site.role} · {site.company} · {site.city}
+          {site.role} · {site.company}
         </Text>
         <Text style={styles.contactRow}>
+          {resume.location}
+          {"  ·  "}
+          <Link src={`tel:${resume.phone.replace(/[^+\d]/g, "")}`} style={styles.link}>
+            {resume.phone}
+          </Link>
+          {"  ·  "}
           <Link src={`mailto:${site.email}`} style={styles.link}>
             {site.email}
           </Link>
-          {"   ·   "}
+          {"  ·  "}
           <Link src={site.socials.github} style={styles.link}>
             github.com/{githubHandle}
-          </Link>
-          {"   ·   "}
-          <Link src={site.socials.linkedin} style={styles.link}>
-            linkedin.com/{linkedinHandle}
           </Link>
         </Text>
 
@@ -252,9 +248,11 @@ export function ResumePdfDocument() {
           <Text style={styles.sectionHeading}>Education</Text>
           {resume.education.map((ed) => (
             <View key={ed.degree} style={styles.eduBlock}>
-              <Text style={styles.eduDegree}>{ed.degree}</Text>
-              <Text style={styles.eduSchool}>
-                {ed.school} · {ed.period}
+              <Text style={styles.eduDegree}>
+                {ed.degree}
+                <Text style={styles.eduSchool}>
+                  {" · "}{ed.school} · {ed.period}
+                </Text>
               </Text>
             </View>
           ))}

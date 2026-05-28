@@ -78,10 +78,17 @@ export function ResumeSection() {
                 {site.name}
               </h3>
               <p className="mt-1 text-muted">
-                {site.role} · {site.company} · {site.city}
+                {site.role} · {site.company}
               </p>
               <p className="mt-2 text-sm text-muted-2 font-mono">
-                {site.email} ·{" "}
+                {resume.location} ·{" "}
+                <a
+                  href={`tel:${resume.phone.replace(/[^+\d]/g, "")}`}
+                  className="text-accent hover:underline"
+                >
+                  {resume.phone}
+                </a>{" "}
+                · {site.email} ·{" "}
                 <a
                   href={site.socials.github}
                   target="_blank"
@@ -89,15 +96,6 @@ export function ResumeSection() {
                   className="text-accent hover:underline"
                 >
                   github/sanyam-jain-18
-                </a>{" "}
-                ·{" "}
-                <a
-                  href={site.socials.linkedin}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="text-accent hover:underline"
-                >
-                  in/sanyam-jain-o98
                 </a>
               </p>
             </header>
